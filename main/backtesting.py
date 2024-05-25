@@ -36,13 +36,17 @@ if __name__ == '__main__':
                                                                denoise_logic=denoise_logic,
                                                                denoise=denoise, isPlot=True,
                                                                train_size=train_size,
+                                                               is_save_ts=True,
                                                                shift=0, unit_tc=0 #ASSUMPTION
                                                                )
 
-    print(pd.DataFrame(
+    df = pd.DataFrame(
         {
             'train': train_kpi_dict,
             'test': test_kpi_dict,
             'full_set': full_set_dict
         }
-    ).T)
+    ).T
+    print(df)
+    df.T.to_csv(
+        f'result/{metrics_name}/{denoise_logic}/performance_{denoise_logic}_{tf},{isMomentum},{lookback_period},{threshold}_ttf.csv')

@@ -15,6 +15,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import itertools
 from util.util_performance import *
 import plotly.graph_objects as go
+import plotly.io as pio
 from plotly.subplots import make_subplots
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
@@ -104,6 +105,15 @@ def denoise(df:pd.DataFrame,denoise_logic:str, lookback_period:int):
         df['sd_volatility'] = df['volatility'].rolling(lookback_period).std()
         df['signal'] = (df['volatility'] - df['mean_volatility']) / df['sd_volatility']
 
+    elif denoise_logic=='power+z':
+        from sklearn.preprocessing import PowerTransformer
+        data = df['metric']
+        scaler = PowerTransformer(method='yeo-johnson')
+        series = scaler.fit_transform(data.values.reshape(-1, 1))
+        df['metric'] = series
+        df['ma'] = df['metric'].rolling(lookback_period).mean()
+        df['sd'] = df['metric'].rolling(lookback_period).std()
+        df['signal'] = (df['metric'] - df['ma']) / df['sd']
 
     return df
 
@@ -234,7 +244,7 @@ def calculations(df:pd.DataFrame,threshold:float, isMomentum:bool,
     df['benchmark_drawdown'] = df['cum_benchmark_ret'] - df['benchmark_cumulative_max']
 
     return df
-def compute_kpi(df:pd.DataFrame,tf_int:int):
+def compute_kpi(df:pd.DataFrame,tf_int:int,can_early_return:bool=False):
     kpi_dict={}
     annualized_factor= 365*24/tf_int
     logger.info(f"annualized factor: {annualized_factor}")
@@ -256,13 +266,55 @@ def compute_kpi(df:pd.DataFrame,tf_int:int):
 
     strategy_t = perform_t_test(df['strategy_ret'],df['benchmark_ret'])
 
-    alpha, beta = calculate_alpha_beta(df['strategy_ret'], df['benchmark_ret'])
+    alpha, beta = calculate_alpha_beta(df['strategy_ret'], df['benchmark_ret'],annualized_factor=annualized_factor)
 
     ############################################
     if (strategy_sharpe is not None):
         if (strategy_sharpe > benchmark_sharpe):
             logger.success(f"Sharpe: strategy={strategy_sharpe} || benchmark={benchmark_sharpe}")
             logger.success(f"MDD: strategy={strategy_mdd} || benchmark={benchmark_mdd}")
+
+    if can_early_return:
+        if (strategy_sharpe is not None):
+            if (strategy_sharpe < 0):
+                kpi_dict = {
+                    'strategy_sharpe': strategy_sharpe,
+                    'benchmark_sharpe': benchmark_sharpe,
+
+                    'strategy_mdd': strategy_mdd,
+                    'benchmark_mdd': benchmark_mdd,
+
+                    'strategy_ar': strategy_ar,
+                    'benchamrk_ar': benchamrk_ar,
+
+                    'strategy_calmar': strategy_calmar,
+                    'benchamrk_calmar': benchamrk_calmar,
+
+                    'strategy_recovery': strategy_recovery,
+                    'benchmark_recovery': benchmark_recovery}
+                return kpi_dict  # TODO: early return
+            else:
+                pass
+
+
+        else: #if none
+            logger.warning(f"strategy_sharpe is None")
+            kpi_dict = {
+                'strategy_sharpe': strategy_sharpe,
+                'benchmark_sharpe': benchmark_sharpe,
+
+                'strategy_mdd': strategy_mdd,
+                'benchmark_mdd': benchmark_mdd,
+
+                'strategy_ar': strategy_ar,
+                'benchamrk_ar': benchamrk_ar,
+
+                'strategy_calmar': strategy_calmar,
+                'benchamrk_calmar': benchamrk_calmar,
+
+                'strategy_recovery': strategy_recovery,
+                'benchmark_recovery': benchmark_recovery}
+            return kpi_dict #TODO: early return
 
     ############################################
     expected_return, win_rate, win_pnl, lose_pnl = compute_expected_return_(df,style='long&short')
@@ -374,14 +426,20 @@ def backtesting( coin:str,tf:str,metrics_name:str,
 
 
     if is_save_ts:
-        file_name = f'{metrics_name}|{coin}|{tf}|{lookback_period}|{threshold}|{isMomentum}|{denoise_logic}.csv'
+        # file_name = f'{metrics_name}-{coin}-{tf}-{lookback_period}-{threshold}-{isMomentum}-{denoise_logic}.csv'
+        file_name = f'{metrics_name}-{coin}-{tf}-{denoise_logic}-{isMomentum}-{lookback_period}-{threshold}.csv'
         time_series_folder_path = os.path.join('result', metrics_name, denoise_logic, 'time_series')
 
         if not os.path.exists(time_series_folder_path):
             os.makedirs(time_series_folder_path)
-        df_denoise.to_csv(os.path.join(time_series_folder_path, file_name.replace('.csv', '_full.csv')))
+
+        df_denoise.to_csv(
+            os.path.join(time_series_folder_path, file_name.replace('.csv', '_full.csv'))
+        )
         df_denoise_train.to_csv(os.path.join(time_series_folder_path, file_name.replace('.csv', '_train.csv')))
         df_denoise_test.to_csv(os.path.join(time_series_folder_path, file_name.replace('.csv', '_test.csv')))
+
+        logger.debug(f'Saved return time series: {file_name}')
 
     train_kpi_dict = compute_kpi(df_denoise_train, tf_int)
     test_kpi_dict = compute_kpi(df_denoise_test,  tf_int)
@@ -566,7 +624,7 @@ def optimization(asset_list:list,metrics_name:str,
         print('='*200)
         logger.info(f'coin:{coin}| tf:{tf}| isMomentum:{isMomentum}| lookback_period:{lookback_period}| threshold:{threshold}| denoise_logic:{denoise_logic}')
 
-        if os.path.join(metrics_name, denoise_logic) not in os.listdir('../main/result'):
+        if os.path.join(metrics_name, denoise_logic) not in os.listdir('../8020/result'):
             result_folder_path = os.path.join('result', metrics_name, denoise_logic)
             if not os.path.exists(result_folder_path):
                 os.makedirs(result_folder_path)
@@ -587,7 +645,7 @@ def optimization(asset_list:list,metrics_name:str,
                     lookback_period=lookback_period,
                     threshold=threshold,
                     denoise_logic=denoise_logic,
-                    denoise=denoise,isPlot=False,shift=shift,unit_tc=unit_tc,is_save_ts=False)
+                    denoise=denoise,isPlot=False,shift=shift,unit_tc=unit_tc,is_save_ts=is_save_ts)
 
         train_kpi_dict['coin'] = coin
         train_kpi_dict['tf'] = tf
@@ -651,12 +709,12 @@ def create_heatmap(
         colorscale=custom_colorscale,
         zmid=0.0,
         hoverinfo='z',
-        showscale=True
+        showscale=True,
     )
     if title:
         header=title
     else:
-        header=f"{metrics_name}_{coin}_{tf}_{isMomentum}_{denoise_logic}_{train_test_full}"
+        header=f"{metrics_name}_{coin}_{tf}_{isMomentum}_{denoise_logic}_{kpi}_{train_test_full}"
 
     # Update layout
     fig.update_layout(
@@ -685,9 +743,12 @@ def create_heatmap(
         # height=1080,
         autosize=True
     )
+    # Here we add a custom hovertemplate
+    for i in range(len(fig.data)):
+        fig.data[i].hovertemplate = 'X: %{x}<br>Y: %{y}<br>value: %{z}<extra></extra>'
 
     fig.update_xaxes(side='bottom')
+    fig.write_image(f"{result_folder_path}/{denoise_logic}/heatmap_{denoise_logic}_{kpi}_{train_test_full}.png"
+                    , width=2560, height=1440*2, scale=1)
     fig.show()
-
-
 
