@@ -375,7 +375,7 @@ class Backtester:
 
         if is_save_ts:
             file_name = f'{metrics_name}|{coin}|{tf}|{lookback_period}|{threshold}|{isMomentum}|{denoise_logic}.csv'
-            time_series_folder_path = os.path.join('result', metrics_name, denoise_logic, 'time_series')
+            time_series_folder_path = os.path.join('../main/result', metrics_name, denoise_logic, 'time_series')
 
             if not os.path.exists(time_series_folder_path):
                 os.makedirs(time_series_folder_path)
@@ -576,7 +576,7 @@ class Backtester:
                 f'coin:{coin}| tf:{tf}| isMomentum:{isMomentum}| lookback_period:{lookback_period}| threshold:{threshold}| denoise_logic:{denoise_logic}')
 
             if os.path.join(metrics_name, denoise_logic) not in os.listdir('../main/result'):
-                result_folder_path = os.path.join('result', metrics_name, denoise_logic)
+                result_folder_path = os.path.join('../main/result', metrics_name, denoise_logic)
                 if not os.path.exists(result_folder_path):
                     os.makedirs(result_folder_path)
                     logger.debug(f"Create folder: {result_folder_path}")
