@@ -1,25 +1,28 @@
-# STAT8020
+# Quantitative Finance 101: Backtesting and Optimization
 
-### 1. create a virtual env
+Welcome to the Quantitative Finance 101: Backtesting and Optimization project. This project aims to demonstrate how to perform backtesting and optimization in the quantitative finance world.
 
-**Windows:** python -m venv venv
+## Getting Started
+To get started, please check out the main.py script or the demo.ipynb notebook for instructions on how to use the code.
 
-**Mac:** python3 -m venv venv
-
-### 2. activate venv
-
-**Windows:** venv\Scripts\activate
-
-Mac: source venv/bin/activate
-
-### 3. install all packages
-
+## Prerequisites
+Ensure you have the necessary libraries installed. You can install the required packages using:
 pip install -r requirements.txt
 
-### 4. upgrade pip
+## Project Structure
+The project is organized in a clean and efficient manner, following a facade design pattern. Here's an overview of the structure:
 
-python.exe -m pip install --upgrade pip
+* facade/: Contains the Backtester class and other core components.
+* util/: Contains utility functions that support the main functionality.
+* main/: Contains the primary scripts and notebooks for running the backtests and optimizations.
+* result/: Stores the backtest and optimization results, including Sharpe ratio heatmaps and time series data for certain parameters.
 
-### 5. if a new package is installed, then update requirements.txt
+## Usage
 
-pip freeze > requirements.txt
+Running Backtests and Optimizations:
+You can run the main.py script to perform backtesting and optimization.
+Alternatively, use the demo.ipynb notebook to explore the functionalities interactively.
+
+Viewing Results:
+The results are stored in the result folder.
+You can find Sharpe ratio heatmaps and time series data for various parameters within this folder.
