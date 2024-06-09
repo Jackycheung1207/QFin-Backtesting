@@ -521,12 +521,9 @@ class Backtester:
                               title_text=f"Strategy vs Benchmark Performance (Training size: {train_size}) || params: {coin} | {tf} | {metrics_name} | {lookback_period} | {threshold} | {denoise_logic} | {isMomentum}",
                               legend=dict(orientation="h", yanchor="bottom", y=1.1, xanchor="right", x=1))
             fig.show()
-        kpi_dict = {
-            'train': train_kpi_dict,
-            'test': test_kpi_dict,
-            'full_set': full_set_dict
-        }
 
+        pio.write_html(fig,
+                       f"{self.RESULT_FOLDER_PATH}/{denoise_logic}/time_series_{denoise_logic}_{isMomentum}_{lookback_period}_{threshold}.html")
         return train_kpi_dict, test_kpi_dict, full_set_dict
 
     def optimization(self,asset_list: list,
@@ -756,7 +753,7 @@ if __name__ == '__main__':
         style='long&short',
         training_size=0.7
     )
-    # backtester.backtesting(isPlot=True, train_size=0.7, is_save_ts=False)
+    backtester.backtesting(isPlot=True, train_size=0.7, is_save_ts=False)
     # 
     # 
     # backtester.optimization(
@@ -771,13 +768,13 @@ if __name__ == '__main__':
     #     train_size=0.7
     # )
 
-    backtester.create_heatmap_interactive(
-        metrics_name='BTC',
-        train_test_full='train',
-        coin='BTC',
-        tf='8h',
-        isMomentum=True,
-        denoise_logic='z',
-        title=None,
-        kpi='strategy_sharpe'
-    )
+    # backtester.create_heatmap_interactive(
+    #     metrics_name='BTC',
+    #     train_test_full='train',
+    #     coin='BTC',
+    #     tf='8h',
+    #     isMomentum=True,
+    #     denoise_logic='z',
+    #     title=None,
+    #     kpi='strategy_sharpe'
+    # )
