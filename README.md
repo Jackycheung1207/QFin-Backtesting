@@ -1,6 +1,6 @@
 # Quantitative Finance 101: Backtesting and Optimization
 
-Welcome to the Quantitative Finance 101: Backtesting and Optimization project. This project aims to demonstrate how to perform backtesting and optimization in the quantitative finance world.
+Welcome to the Quantitative Finance 101: Backtesting and Optimization project. This project aims to demonstrate how to perform backtesting and optimization in the quantitative finance way.
 
 ## Getting Started
 To get started, please check out the main.py script or the demo.ipynb notebook for instructions on how to use the code.
