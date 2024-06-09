@@ -16,6 +16,8 @@ import itertools
 from util.util_performance import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import seaborn as sns
+import plotly.io as pio
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000)
@@ -572,6 +574,7 @@ class Backtester:
         # Iterate over each hyperparameter combination and perform backtesting
         for coin, tf, isMomentum, lookback_period, threshold, denoise_logic in hyperparameter_combinations:
             print('=' * 200)
+            threshold = Decimal(str(threshold)).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP)
             logger.info(
                 f'coin:{coin}| tf:{tf}| isMomentum:{isMomentum}| lookback_period:{lookback_period}| threshold:{threshold}| denoise_logic:{denoise_logic}')
 
@@ -625,7 +628,7 @@ class Backtester:
         # return pd.DataFrame(kpi_list).sort_values(by='strategy_sharpe', ascending=False)
         return train_kpi_df, test_kpi_df, full_kpi_df
 
-    def create_heatmap(self,
+    def create_heatmap_interactive(self,
             metrics_name: str = 'BTC',
             train_test_full: str = 'train', coin: str = 'BTC',
             tf: str = '8h', isMomentum: bool = False, denoise_logic: str = 'z',
@@ -694,11 +697,49 @@ class Backtester:
             fig.data[i].hovertemplate = 'X: %{x}<br>Y: %{y}<br>value: %{z}<extra></extra>'
 
         fig.update_xaxes(side='bottom')
+        # Save the interactive plot as an HTML file
+        pio.write_html(fig,
+                       f"{result_folder_path}/{denoise_logic}/heatmap_{denoise_logic}_{kpi}_{train_test_full}.html")
+
         fig.write_image(f"{result_folder_path}/{denoise_logic}/heatmap_{denoise_logic}_{kpi}_{train_test_full}.png"
                         , width=2560, height=1440 * 2, scale=1)
         fig.show()
 
+    def create_heatmap_seaborn(self, metrics_name: str = 'BTC', train_test_full: str = 'train', coin: str = 'BTC',
+                       tf: str = '8h', isMomentum: bool = False, denoise_logic: str = 'z',
+                       title=None, kpi: str = 'strategy_sharpe'):
 
+        result_folder_path = f'result/{metrics_name}'
+        opt_df = pd.read_csv(f'{result_folder_path}/{denoise_logic}/performance_{denoise_logic}_{train_test_full}.csv',
+                             index_col=0)
+
+        df = opt_df[
+            (opt_df.coin == coin) &
+            (opt_df.tf == tf) &
+            (opt_df.isMomentum == isMomentum) &
+            (opt_df.denoise_logic == denoise_logic)
+        ]
+        heatmap_data = df.pivot(index='lookback_period', columns='viridis', values=kpi)
+
+        # Create the heatmap using seaborn
+        plt.figure(figsize=(10, 8))
+        ax = sns.heatmap(heatmap_data, annot=True, fmt=".2f", cmap='magma', center=0,
+                         linewidths=.5, cbar_kws={"shrink": .8})
+
+        # Set title
+        if title:
+            plt.title(title)
+        else:
+            title = f"{metrics_name}_{coin}_{tf}_{isMomentum}_{denoise_logic}_{kpi}_{train_test_full}"
+            plt.title(title)
+
+        # Set axis labels
+        plt.xlabel('Threshold')
+        plt.ylabel('Lookback Period')
+
+        # Save the figure
+        plt.savefig(f"{result_folder_path}/{denoise_logic}/heatmap_{denoise_logic}_{kpi}_{train_test_full}.png", dpi=300)
+        plt.show()
 
 if __name__ == '__main__':
     backtester = Backtester(
@@ -716,26 +757,27 @@ if __name__ == '__main__':
         training_size=0.7
     )
     # backtester.backtesting(isPlot=True, train_size=0.7, is_save_ts=False)
-
-    # backtester.create_heatmap(
-    #     metrics_name='BTC',
-    #     train_test_full='train',
-    #     coin='BTC',
-    #     tf='8h',
-    #     isMomentum=True,
-    #     denoise_logic='z',
-    #     title=None,
-    #     kpi='strategy_sharpe'
+    # 
+    # 
+    # backtester.optimization(
+    #     asset_list=['BTC'],
+    #     tf_list=['8h'],
+    #     lookback_period_list=np.arange(5,505,5),
+    #     isMomentum_list=[True,False],
+    #     denoise_logic_list=['z'],
+    #     threshold_list=None,
+    #     is_save_ts=False,
+    #     is_plot=False,
+    #     train_size=0.7
     # )
 
-    backtester.optimization(
-        asset_list=['BTC'],
-        tf_list=['8h'],
-        lookback_period_list=np.arange(5,505,5),
-        isMomentum_list=[True,False],
-        denoise_logic_list=['z'],
-        threshold_list=None,
-        is_save_ts=False,
-        is_plot=False,
-        train_size=0.7
+    backtester.create_heatmap_interactive(
+        metrics_name='BTC',
+        train_test_full='train',
+        coin='BTC',
+        tf='8h',
+        isMomentum=True,
+        denoise_logic='z',
+        title=None,
+        kpi='strategy_sharpe'
     )
