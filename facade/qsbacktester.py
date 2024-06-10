@@ -399,32 +399,6 @@ class Backtester:
             i['annulaized_factor'] = 365 * 24 / tf_int
 
         if isPlot:
-            # # Plot for df_denoise_train
-            # plt.figure(figsize=(10, 6))
-            # df_denoise_train[['cum_strategy_ret', 'cum_benchmark_ret']].plot()
-            # plt.title('Cumulative Returns - Train Set')
-            # plt.xlabel('Date')
-            # plt.ylabel('Cumulative Returns')
-            # plt.legend(['Strategy Returns', 'Benchmark Returns'])
-            # plt.tight_layout()
-            # # Plot for df_denoise_test
-            # plt.figure(figsize=(10, 6))
-            # df_denoise_test[['cum_strategy_ret', 'cum_benchmark_ret']].plot()
-            # plt.title('Cumulative Returns - Test Set')
-            # plt.xlabel('Date')
-            # plt.ylabel('Cumulative Returns')
-            # plt.legend(['Strategy Returns', 'Benchmark Returns'])
-            # plt.tight_layout()
-            # # Plot for df_denoise
-            # plt.figure(figsize=(10, 6))
-            # df_denoise[['cum_strategy_ret', 'cum_benchmark_ret']].plot()
-            # plt.title('Cumulative Returns - Full Dataset')
-            # plt.xlabel('Date')
-            # plt.ylabel('Cumulative Returns')
-            # plt.legend(['Strategy Returns', 'Benchmark Returns'])
-            # plt.tight_layout()
-
-            # plt.show()
 
             fig = make_subplots(rows=3, cols=3, subplot_titles=(
                 'Return Time Series - Train', 'Return Time Series - Test', 'Return Time Series - Full',
@@ -550,13 +524,9 @@ class Backtester:
         hyperparameter_combinations = list(
             itertools.product(asset_list, tf_list, isMomentum_list, lookback_period_list, threshold_list,
                               denoise_logic_list))
-        # print(pd.DataFrame(hyperparameter_combinations))
+
         logger.info(f"Total number of hyperparameter combinations: {len(hyperparameter_combinations)}")
 
-        # exchange = 'binance'
-        # instrument = 'perp'
-        # price_folder_path = '../Data/Price'
-        # metric_folder_path = f'../Data/OnChain'
 
         exchange = self.exchange
         instrument = self.instrument
@@ -582,7 +552,7 @@ class Backtester:
                     logger.debug(f"Create folder: {result_folder_path}")
                 else:
                     pass
-                    # logger.debug(f"Folder already exists: {result_folder_path}")
+
 
             kpi = {}
             train_kpi_dict = {}
@@ -622,7 +592,7 @@ class Backtester:
         test_kpi_df = pd.DataFrame(test_kpi_dict_list).sort_values(by='strategy_sharpe', ascending=False)
         full_kpi_df = pd.DataFrame(full_set_dict_list).sort_values(by='strategy_sharpe', ascending=False)
 
-        # return pd.DataFrame(kpi_list).sort_values(by='strategy_sharpe', ascending=False)
+
         return train_kpi_df, test_kpi_df, full_kpi_df
 
     def create_heatmap_interactive(self,
@@ -665,7 +635,7 @@ class Backtester:
         # Update layout
         fig.update_layout(
             title={
-                # 'text': metrics_name+f'_{coin}_{tf}'+'_heatmap',
+
                 'text': header,
                 'y': 0.95,
                 'x': 0.5,
@@ -754,27 +724,27 @@ if __name__ == '__main__':
         training_size=0.7
     )
     backtester.backtesting(isPlot=True, train_size=0.7, is_save_ts=False)
-    # 
-    # 
-    # backtester.optimization(
-    #     asset_list=['BTC'],
-    #     tf_list=['8h'],
-    #     lookback_period_list=np.arange(5,505,5),
-    #     isMomentum_list=[True,False],
-    #     denoise_logic_list=['z'],
-    #     threshold_list=None,
-    #     is_save_ts=False,
-    #     is_plot=False,
-    #     train_size=0.7
-    # )
 
-    # backtester.create_heatmap_interactive(
-    #     metrics_name='BTC',
-    #     train_test_full='train',
-    #     coin='BTC',
-    #     tf='8h',
-    #     isMomentum=True,
-    #     denoise_logic='z',
-    #     title=None,
-    #     kpi='strategy_sharpe'
-    # )
+
+    backtester.optimization(
+        asset_list=['BTC'],
+        tf_list=['8h'],
+        lookback_period_list=np.arange(5,505,5),
+        isMomentum_list=[True,False],
+        denoise_logic_list=['z'],
+        threshold_list=None,
+        is_save_ts=False,
+        is_plot=False,
+        train_size=0.7
+    )
+
+    backtester.create_heatmap_interactive(
+        metrics_name='BTC',
+        train_test_full='train',
+        coin='BTC',
+        tf='8h',
+        isMomentum=True,
+        denoise_logic='z',
+        title=None,
+        kpi='strategy_sharpe'
+    )
